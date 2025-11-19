@@ -3,103 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot UGTO (Versión Local)</title>
+    <title>Chatbot UGTO con Gemini</title>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: #fdfaf6; /* Un blanco tirando a miel */
-            color: #333;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        #chat-container {
-            width: 90%;
-            max-width: 500px;
-            height: 70vh;
-            background-color: #fff;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        #chat-header {
-            background-color: #EABE7C; /* Color miel principal */
-            color: #000;
-            padding: 1.2rem;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-bottom: 2px solid #D4A373;
-        }
-        #chat-messages {
-            flex-grow: 1;
-            padding: 1.5rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .message {
-            padding: 0.8rem 1.2rem;
-            border-radius: 20px;
-            line-height: 1.5;
-            max-width: 80%;
-        }
-        .user-message {
-            background-color: #f0f0f0;
-            color: #333;
-            align-self: flex-end;
-            border-bottom-right-radius: 5px;
-        }
-        .bot-message {
-            background-color: #EABE7C; /* Miel */
-            color: #000;
-            align-self: flex-start;
-            border-bottom-left-radius: 5px;
-        }
-        #chat-input {
-            display: flex;
-            border-top: 2px solid #f0f0f0;
-            padding: 1rem;
-        }
-        #chat-input input {
-            flex-grow: 1;
-            border: none;
-            padding: 0.8rem;
-            font-size: 1rem;
-            border-radius: 20px;
-            background-color: #f0f0f0;
-            outline: none;
-            transition: background-color 0.3s;
-        }
-        #chat-input input:focus {
-            background-color: #e9e9e9;
-        }
-        #chat-input button {
-            background-color: #000;
-            color: #fff;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            margin-left: 0.5rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s;
-        }
-        #chat-input button:hover {
-            background-color: #333;
-        }
+        /* --- Estilos (sin cambios) --- */
+        body { font-family: sans-serif; background-color: #fdfaf6; color: #333; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #chat-container { width: 90%; max-width: 500px; height: 70vh; background-color: #fff; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+        #chat-header { background-color: #EABE7C; color: #000; padding: 1.2rem; text-align: center; font-size: 1.5rem; font-weight: bold; border-bottom: 2px solid #D4A373; }
+        #chat-messages { flex-grow: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        .message { padding: 0.8rem 1.2rem; border-radius: 20px; line-height: 1.5; max-width: 80%; }
+        .user-message { background-color: #f0f0f0; color: #333; align-self: flex-end; border-bottom-right-radius: 5px; }
+        .bot-message { background-color: #EABE7C; color: #000; align-self: flex-start; border-bottom-left-radius: 5px; }
+        .error-message { background-color: #d9534f; color: white; align-self: flex-start; }
+        #chat-input { display: flex; border-top: 2px solid #f0f0f0; padding: 1rem; }
+        #chat-input input { flex-grow: 1; border: none; padding: 0.8rem; font-size: 1rem; border-radius: 20px; background-color: #f0f0f0; outline: none; transition: background-color 0.3s; }
+        #chat-input input:focus { background-color: #e9e9e9; }
+        #chat-input button { background-color: #000; color: #fff; border: none; padding: 0.8rem 1.5rem; margin-left: 0.5rem; border-radius: 20px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s; }
+        #chat-input button:hover { background-color: #333; }
     </style>
+    
+    <!-- PASO 1: Importar la API de Gemini -->
+    <script type="module" src="https://unpkg.com/@google/generative-ai"></script>
+
 </head>
 <body>
     <div id="chat-container">
-        <div id="chat-header">Asistente UGTO</div>
+        <div id="chat-header">Asistente UGTO (con IA)</div>
         <div id="chat-messages">
-             <div class="message bot-message">¡Hola! Soy tu asistente virtual de la UGTO. ¿En qué puedo ayudarte hoy?</div>
+             <div class="message bot-message">¡Hola! Soy tu asistente virtual de la UGTO mejorado con IA. ¿En qué puedo ayudarte hoy?</div>
         </div>
         <div id="chat-input">
             <input type="text" id="user-input" placeholder="Escribe tu pregunta...">
@@ -107,75 +37,138 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // --- Importaciones y configuración de la API ---
+        const { GoogleGenerativeAI } = await import("https://unpkg.com/@google/generative-ai");
+
+        // =========================================================================================
+        // PASO 2: CONSIGUE TU API KEY Y PÉGALA AQUÍ
+        // Ve a https://makersuite.google.com/app/apikey para crear tu clave.
+        const API_KEY = "AIzaSyANG6cABgPV7N0QK0ElY6jZcNZ5cWMt1dI"; 
+        // =========================================================================================
+
         const messagesContainer = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
         const sendButton = document.getElementById('send-button');
         
-        let database = [];
+        let database = null;
+        let genAI;
+        let generativeModel;
 
-        // Cargar la base de datos local
-        async function loadDatabase() {
+        // --- Inicialización y carga de datos ---
+        async function initializeAI() {
+            if (!API_KEY || API_KEY === "PEGA_TU_API_KEY_AQUI") {
+                 addMessage("Error de configuración: La clave de API de Gemini no ha sido configurada. Por favor, edita el archivo chatbot.html y añade tu clave.", "error");
+                return false;
+            }
             try {
-                const response = await fetch('./base_datos_ugto_completa.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                database = await response.json();
-                addMessage('Base de datos cargada. ¡Lista para ayudar!', 'bot');
-            } catch (e) {
-                console.error('Error al cargar la base de datos:', e);
-                addMessage('Error: No pude cargar mi base de conocimiento (el archivo JSON). Asegúrate de que está en la misma carpeta que este archivo HTML.', 'bot');
+                genAI = new GoogleGenerativeAI(API_KEY);
+                generativeModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                return true;
+            } catch (error) {
+                console.error("Error al inicializar Gemini:", error);
+                addMessage(`Error al conectar con la API de Gemini. Revisa la consola (F12) para más detalles.`, "error");
+                return false;
             }
         }
 
-        function addMessage(text, sender) {
+        async function loadDatabase() {
+            try {
+                const response = await fetch('./base_datos_ugto_completa.json');
+                if (!response.ok) throw new Error(`Error al cargar el archivo JSON: ${response.status}`);
+                database = await response.json();
+                addMessage('Base de conocimiento cargada. ¡Listo para ayudar!', 'bot');
+            } catch (e) {
+                console.error('Error fatal:', e);
+                addMessage('Error: No pude cargar mi base de conocimiento (el archivo JSON). Asegúrate de que está en la misma carpeta que este archivo HTML.', 'error');
+                database = null; // Asegurarse de que no procedemos si la BD falla
+            }
+        }
+
+        // --- Lógica del Chat ---
+        function addMessage(text, type) { // type puede ser 'user', 'bot', o 'error'
             const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+            messageDiv.classList.add('message', `${type}-message`);
             messageDiv.textContent = text;
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        function getBotResponse(userMessage) {
-            const message = userMessage.toLowerCase();
-            
-            // Lógica de búsqueda simple (igual que en la versión de Python)
-            for (const item of database) {
-                const title = (item.title || '').toLowerCase();
-                const content = (item.content || '').toLowerCase();
-                const keywords = (item.keywords || []).map(k => k.toLowerCase());
+        async function getBotResponse(userMessage) {
+            if (!database) {
+                return "Lo siento, mi base de conocimiento no está disponible en este momento.";
+            }
+            if (!generativeModel) {
+                 return "Lo siento, el modelo de IA no se ha inicializado correctamente.";
+            }
 
-                if (title.includes(message) || content.includes(message) || keywords.some(k => k.includes(message))) {
-                    return item.content;
+            addMessage("Pensando...", "bot"); // Mensaje de espera
+
+            const context = JSON.stringify(database);
+            const prompt = `
+                Eres "Asistente UGTO", un chatbot experto y amigable de la Universidad de Guanajuato.
+                Tu ÚNICA fuente de información es el siguiente documento JSON que contiene toda la información que conoces. NO debes usar conocimiento externo.
+                Basándote EXCLUSIVAMENTE en este contexto, responde la pregunta del usuario de manera clara y concisa.
+                Si la respuesta no se encuentra en el contexto, debes decir "Lo siento, no tengo información sobre ese tema en mi base de conocimiento.".
+
+                CONTEXTO JSON:
+                ${context}
+
+                PREGUNTA DEL USUARIO:
+                "${userMessage}"
+            `;
+
+            try {
+                const result = await generativeModel.generateContent(prompt);
+                const response = result.response;
+                const text = await response.text();
+
+                // Reemplazar el mensaje "Pensando..." con la respuesta final
+                const thinkingMessage = messagesContainer.querySelector('.bot-message:last-child');
+                if (thinkingMessage && thinkingMessage.textContent === "Pensando...") {
+                    thinkingMessage.textContent = text;
+                } else {
+                    addMessage(text, 'bot');
+                }
+
+            } catch (error) {
+                console.error("Error al generar contenido:", error);
+                const thinkingMessage = messagesContainer.querySelector('.bot-message:last-child');
+                if (thinkingMessage && thinkingMessage.textContent === "Pensando...") {
+                    thinkingMessage.textContent = "Hubo un error al procesar tu pregunta. Por favor, intenta de nuevo.";
+                    thinkingMessage.classList.remove('bot-message');
+                    thinkingMessage.classList.add('error-message');
                 }
             }
-            return "Lo siento, no pude encontrar información sobre eso.";
         }
 
-        function handleSend() {
+        async function handleSend() {
             const message = userInput.value.trim();
             if (!message) return;
 
             addMessage(message, 'user');
             userInput.value = '';
 
-            // Simula una pequeña espera para que parezca más natural
-            setTimeout(() => {
-                const botResponse = getBotResponse(message);
-                addMessage(botResponse, 'bot');
-            }, 500);
+            await getBotResponse(message);
         }
 
+        // --- Ejecución inicial ---
         sendButton.addEventListener('click', handleSend);
         userInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
+                event.preventDefault(); // Evita que se envíe el formulario si lo hubiera
                 handleSend();
             }
         });
 
-        // Cargar la base de datos al iniciar
-        loadDatabase();
+        async function main() {
+            const aiReady = await initializeAI();
+            if (aiReady) {
+                await loadDatabase();
+            }
+        }
+        
+        main();
     </script>
 </body>
 </html>
