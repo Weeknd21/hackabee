@@ -6,7 +6,6 @@ import os
 
 app = Flask(__name__)
 
-# CORS robusto
 CORS(app, resources={
     r"/*": {
         "origins": "*",
@@ -22,12 +21,10 @@ def cargar_contexto():
     """Carga contexto de archivos .toon y PDFs"""
     contexto_completo = ""
     
-    # Cargar archivo .toon
     if os.path.exists("contexto.toon"):
         with open("contexto.toon", "r", encoding="utf-8") as f:
             contexto_completo += f.read() + "\n\n"
     
-    # Cargar PDFs de la carpeta 'pdfs'
     pdf_folder = "pdfs"
     if os.path.exists(pdf_folder):
         for filename in os.listdir(pdf_folder):
@@ -50,7 +47,6 @@ def extraer_texto_pdf(ruta_pdf):
             texto += pagina.extract_text() + "\n"
     return texto
 
-# Cargar contexto al iniciar el servidor
 CONTEXTO = cargar_contexto()
 print(f"Contexto cargado: {len(CONTEXTO)} caracteres")
 
