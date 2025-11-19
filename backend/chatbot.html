@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ChatBot Gemini</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 420px;
+      height: 600px;
+      background: #161b22;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    .header {
+      padding: 15px;
+      background: #0d1117;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .msg {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      max-width: 85%;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .user {
+      background: #238636;
+      margin-left: auto;
+    }
+
+    .bot {
+      background: #30363d;
+      margin-right: auto;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 12px;
+      background: #0d1117;
+      border-top: 1px solid #30363d;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      background: #21262d;
+      color: white;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 12px 18px;
+      border: none;
+      background: #1f6feb;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #388bfd;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+</head>
+
+<body>
+
+<div class="chat-container">
+  <div class="header">ChatBot Gemini</div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <input id="userInput" placeholder="Escribe algo..." />
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+</div>
+
+<script>
+// -----------------------------------------
+// Enviar mensaje al BACKEND (Python Flask)
+// -----------------------------------------
+async function sendMessageToServer(prompt) {
+  const response = await fetch("http://localhost:5000/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: prompt })
+  });
+
+  const data = await response.json();
+  return data.response;
+}
+
+// -----------------------------------------
+// Mostrar mensajes en el chat
+// -----------------------------------------
+function addMessage(text, type) {
+  const box = document.getElementById("messages");
+  const msg = document.createElement("div");
+  msg.className = "msg " + type;
+  msg.textContent = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+// -----------------------------------------
+// Enviar mensaje
+// -----------------------------------------
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage(text, "user");
+  input.value = "";
+
+  const response = await sendMessageToServer(text);
+  addMessage(response, "bot");
+}
+
+// Enter para enviar
+document.getElementById("userInput").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") sendMessage();
+});
+</script>
+
+</body>
+</html>
