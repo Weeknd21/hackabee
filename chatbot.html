@@ -20,10 +20,6 @@
         #chat-input button { background-color: #000; color: #fff; border: none; padding: 0.8rem 1.5rem; margin-left: 0.5rem; border-radius: 20px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s; }
         #chat-input button:hover { background-color: #333; }
     </style>
-    
-    <!-- PASO 1: Importar la API de Gemini -->
-    <script type="module" src="https://unpkg.com/@google/generative-ai"></script>
-
 </head>
 <body>
     <div id="chat-container">
@@ -39,11 +35,12 @@
 
     <script type="module">
         // --- Importaciones y configuración de la API ---
-        const { GoogleGenerativeAI } = await import("https://unpkg.com/@google/generative-ai");
+        // **CORREGIDO**: Se usa esm.run para asegurar que se carga la versión para navegador (ES Module).
+        const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
 
         // =========================================================================================
-        // PASO 2: CONSIGUE TU API KEY Y PÉGALA AQUÍ
-        // Ve a https://makersuite.google.com/app/apikey para crear tu clave.
+        // TU API KEY VA AQUÍ
+        // Recuerda que ya pusiste tu clave, ¡no la cambies!
         const API_KEY = "AIzaSyANG6cABgPV7N0QK0ElY6jZcNZ5cWMt1dI"; 
         // =========================================================================================
 
@@ -58,7 +55,7 @@
         // --- Inicialización y carga de datos ---
         async function initializeAI() {
             if (!API_KEY || API_KEY === "PEGA_TU_API_KEY_AQUI") {
-                 addMessage("Error de configuración: La clave de API de Gemini no ha sido configurada. Por favor, edita el archivo chatbot.html y añade tu clave.", "error");
+                addMessage("Error de configuración: La clave de API de Gemini no ha sido configurada. Por favor, edita este archivo y añade tu clave.", "error");
                 return false;
             }
             try {
@@ -81,12 +78,12 @@
             } catch (e) {
                 console.error('Error fatal:', e);
                 addMessage('Error: No pude cargar mi base de conocimiento (el archivo JSON). Asegúrate de que está en la misma carpeta que este archivo HTML.', 'error');
-                database = null; // Asegurarse de que no procedemos si la BD falla
+                database = null;
             }
         }
 
         // --- Lógica del Chat ---
-        function addMessage(text, type) { // type puede ser 'user', 'bot', o 'error'
+        function addMessage(text, type) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', `${type}-message`);
             messageDiv.textContent = text;
@@ -95,19 +92,19 @@
         }
 
         async function getBotResponse(userMessage) {
-            if (!database) {
-                return "Lo siento, mi base de conocimiento no está disponible en este momento.";
-            }
-            if (!generativeModel) {
-                 return "Lo siento, el modelo de IA no se ha inicializado correctamente.";
-            }
+            if (!database) return addMessage("Lo siento, mi base de conocimiento no está disponible.", "error");
+            if (!generativeModel) return addMessage("Lo siento, el modelo de IA no se ha inicializado correctamente.", "error");
 
-            addMessage("Pensando...", "bot"); // Mensaje de espera
+            const thinkingMessage = document.createElement('div');
+            thinkingMessage.classList.add('message', 'bot-message');
+            thinkingMessage.textContent = "Pensando...";
+            messagesContainer.appendChild(thinkingMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
             const context = JSON.stringify(database);
             const prompt = `
                 Eres "Asistente UGTO", un chatbot experto y amigable de la Universidad de Guanajuato.
-                Tu ÚNICA fuente de información es el siguiente documento JSON que contiene toda la información que conoces. NO debes usar conocimiento externo.
+                Tu ÚNICA fuente de información es el siguiente documento JSON. NO debes usar conocimiento externo.
                 Basándote EXCLUSIVAMENTE en este contexto, responde la pregunta del usuario de manera clara y concisa.
                 Si la respuesta no se encuentra en el contexto, debes decir "Lo siento, no tengo información sobre ese tema en mi base de conocimiento.".
 
@@ -122,33 +119,19 @@
                 const result = await generativeModel.generateContent(prompt);
                 const response = result.response;
                 const text = await response.text();
-
-                // Reemplazar el mensaje "Pensando..." con la respuesta final
-                const thinkingMessage = messagesContainer.querySelector('.bot-message:last-child');
-                if (thinkingMessage && thinkingMessage.textContent === "Pensando...") {
-                    thinkingMessage.textContent = text;
-                } else {
-                    addMessage(text, 'bot');
-                }
-
+                thinkingMessage.textContent = text;
             } catch (error) {
                 console.error("Error al generar contenido:", error);
-                const thinkingMessage = messagesContainer.querySelector('.bot-message:last-child');
-                if (thinkingMessage && thinkingMessage.textContent === "Pensando...") {
-                    thinkingMessage.textContent = "Hubo un error al procesar tu pregunta. Por favor, intenta de nuevo.";
-                    thinkingMessage.classList.remove('bot-message');
-                    thinkingMessage.classList.add('error-message');
-                }
+                thinkingMessage.textContent = "Hubo un error al procesar tu pregunta. Por favor, intenta de nuevo.";
+                thinkingMessage.classList.add('error-message');
             }
         }
 
         async function handleSend() {
             const message = userInput.value.trim();
             if (!message) return;
-
             addMessage(message, 'user');
             userInput.value = '';
-
             await getBotResponse(message);
         }
 
@@ -156,7 +139,7 @@
         sendButton.addEventListener('click', handleSend);
         userInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
-                event.preventDefault(); // Evita que se envíe el formulario si lo hubiera
+                event.preventDefault();
                 handleSend();
             }
         });
