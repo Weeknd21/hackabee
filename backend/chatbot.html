@@ -118,23 +118,27 @@
 </div>
 
 <script>
-// -----------------------------------------
-// Enviar mensaje al BACKEND (Python Flask)
-// -----------------------------------------
-async function sendMessageToServer(prompt) {
+// STREAMING desde el backend Flask
+async function sendMessageToServer(prompt, onChunk) {
   const response = await fetch("http://localhost:5000/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message: prompt })
   });
 
-  const data = await response.json();
-  return data.response;
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value);
+    onChunk(chunk);
+  }
 }
 
-// -----------------------------------------
-// Mostrar mensajes en el chat
-// -----------------------------------------
+// Mostrar mensaje fijo
 function addMessage(text, type) {
   const box = document.getElementById("messages");
   const msg = document.createElement("div");
@@ -144,9 +148,18 @@ function addMessage(text, type) {
   box.scrollTop = box.scrollHeight;
 }
 
-// -----------------------------------------
+// Crear mensaje vacío para streaming
+function addStreamingMessage() {
+  const box = document.getElementById("messages");
+  const msg = document.createElement("div");
+  msg.className = "msg bot";
+  msg.textContent = "";
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+  return msg;
+}
+
 // Enviar mensaje
-// -----------------------------------------
 async function sendMessage() {
   const input = document.getElementById("userInput");
   const text = input.value.trim();
@@ -155,8 +168,16 @@ async function sendMessage() {
   addMessage(text, "user");
   input.value = "";
 
-  const response = await sendMessageToServer(text);
-  addMessage(response, "bot");
+  // Mensaje vacío del bot
+  const botMsg = addStreamingMessage();
+
+  // Recibir texto en tiempo real
+  await sendMessageToServer(text, (chunk) => {
+    botMsg.textContent += chunk;
+
+    const box = document.getElementById("messages");
+    box.scrollTop = box.scrollHeight;
+  });
 }
 
 // Enter para enviar
