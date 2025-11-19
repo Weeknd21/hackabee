@@ -34,14 +34,11 @@
     </div>
 
     <script type="module">
-        // --- Importaciones y configuración de la API ---
-        // **CORREGIDO**: Se usa esm.run para asegurar que se carga la versión para navegador (ES Module).
         const { GoogleGenerativeAI } = await import("https://esm.run/@google/generative-ai");
 
         // =========================================================================================
-        // TU API KEY VA AQUÍ
-        // Recuerda que ya pusiste tu clave, ¡no la cambies!
-        const API_KEY = "AIzaSyANG6cABgPV7N0QK0ElY6jZcNZ5cWMt1dI"; 
+        // POR FAVOR, USA UNA NUEVA CLAVE DE API. ¡NO COMPARTAS ESTA CLAVE!
+        const API_KEY = "PEGA_TU_API_KEY_AQUI"; 
         // =========================================================================================
 
         const messagesContainer = document.getElementById('chat-messages');
@@ -52,7 +49,6 @@
         let genAI;
         let generativeModel;
 
-        // --- Inicialización y carga de datos ---
         async function initializeAI() {
             if (!API_KEY || API_KEY === "PEGA_TU_API_KEY_AQUI") {
                 addMessage("Error de configuración: La clave de API de Gemini no ha sido configurada. Por favor, edita este archivo y añade tu clave.", "error");
@@ -60,7 +56,8 @@
             }
             try {
                 genAI = new GoogleGenerativeAI(API_KEY);
-                generativeModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                // **CORREGIDO**: Cambiado al modelo 'gemini-pro' que es más estable y compatible.
+                generativeModel = genAI.getGenerativeModel({ model: "gemini-pro" });
                 return true;
             } catch (error) {
                 console.error("Error al inicializar Gemini:", error);
@@ -82,7 +79,6 @@
             }
         }
 
-        // --- Lógica del Chat ---
         function addMessage(text, type) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', `${type}-message`);
@@ -122,7 +118,7 @@
                 thinkingMessage.textContent = text;
             } catch (error) {
                 console.error("Error al generar contenido:", error);
-                thinkingMessage.textContent = "Hubo un error al procesar tu pregunta. Por favor, intenta de nuevo.";
+                thinkingMessage.textContent = "Hubo un error al procesar tu pregunta. Revisa la consola (F12) para más detalles.";
                 thinkingMessage.classList.add('error-message');
             }
         }
@@ -135,7 +131,6 @@
             await getBotResponse(message);
         }
 
-        // --- Ejecución inicial ---
         sendButton.addEventListener('click', handleSend);
         userInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
