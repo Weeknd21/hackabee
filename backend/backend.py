@@ -41,7 +41,7 @@ Responde naturalmente usando el contexto.
 
     def stream_response():
         stream = client.models.generate_content_stream(
-            model="gemini-2.0-flash-lite",
+            model="gemini-2.0-flash-lite-preview",
             contents=prompt
         )
 

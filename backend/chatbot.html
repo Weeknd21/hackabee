@@ -5,35 +5,124 @@
   <title>ChatBot Gemini</title>
 
   <style>
+    :root {
+      /* Light Mode */
+      --bg: #07203E;
+      --chat-bg: #ffffff;
+      --header-bg: #f8f5ef;
+      --text: #1a1a1a;
+      --user-msg: #ffd745;     /* miel */
+      --bot-msg: #07203E;
+      --input-bg: #f0e6d6;
+      --button-bg: #ffd745;
+      --button-hover: #d4a86b;
+    }
+
+    body.dark {
+      /* Dark Mode */
+      --bg: #0d0c0a;
+      --chat-bg: #1a1917;
+      --header-bg: #0f0e0c;
+      --text: #f0e6d6;
+      --user-msg: #ffd745;
+      --bot-msg: #2b2926;
+      --input-bg: #1f1d1b;
+      --button-bg: #d4a86b;
+      --button-hover: #e0b979;
+    }
+
+    body.bee {
+      /* Bee Mode 🐝 */
+      --bg: #f7d13d;
+      --chat-bg: #fff8dc;
+      --header-bg: #f4c430;
+      --text: #3b2c06;
+      --user-msg: #ffeb75;
+      --bot-msg: #ffe9a9;
+      --input-bg: #fff3c2;
+      --button-bg: #e6b800;
+      --button-hover: #c99c00;
+    }
+
     body {
       margin: 0;
       font-family: "Segoe UI", sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      background: var(--bg);
+      color: var(--text);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 🔥 Abeja gigante transparente (Easter Egg) */
+    .bee-bg {
+      position: absolute;
+      font-size: 180px;
+      opacity: 0.08;
+      top: 5%;
+      right: 5%;
+      user-select: none;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: 0.3s ease-in-out;
+      animation: flyAround 6s infinite ease-in-out alternate;
+    }
+    .bee-bg:hover {
+      opacity: 0.12;
+    }
+
+    /* ✨ Animación de vuelo */
+    @keyframes flyAround {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-30px, 20px) rotate(10deg); }
+      100% { transform: translate(20px, -25px) rotate(-10deg); }
     }
 
     .chat-container {
       width: 420px;
       height: 600px;
-      background: #161b22;
+      background: var(--chat-bg);
       border-radius: 14px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      transition: 0.3s;
+      position: relative;
+      z-index: 10;
     }
 
     .header {
       padding: 15px;
-      background: #0d1117;
+      background: var(--header-bg);
       text-align: center;
       font-size: 20px;
       font-weight: bold;
-      border-bottom: 1px solid #30363d;
+      border-bottom: 1px solid rgba(0,0,0,0.2);
+      position: relative;
+    }
+
+    .toggle-btn {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      background: var(--button-bg);
+      border: none;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .toggle-btn:hover {
+      background: var(--button-hover);
     }
 
     .messages {
@@ -53,20 +142,22 @@
     }
 
     .user {
-      background: #238636;
+      background: var(--user-msg);
       margin-left: auto;
+      color: #000;
     }
 
     .bot {
-      background: #30363d;
+      background: var(--bot-msg);
       margin-right: auto;
+      color: var(--text);
     }
 
     .input-area {
       display: flex;
       padding: 12px;
-      background: #0d1117;
-      border-top: 1px solid #30363d;
+      background: var(--header-bg);
+      border-top: 1px solid rgba(0,0,0,0.2);
     }
 
     input {
@@ -76,15 +167,16 @@
       border-radius: 10px;
       font-size: 15px;
       outline: none;
-      background: #21262d;
-      color: white;
+      background: var(--input-bg);
+      color: var(--text);
+      transition: 0.3s;
     }
 
     button {
       margin-left: 10px;
       padding: 12px 18px;
       border: none;
-      background: #1f6feb;
+      background: var(--button-bg);
       color: white;
       border-radius: 10px;
       cursor: pointer;
@@ -93,7 +185,7 @@
     }
 
     button:hover {
-      background: #388bfd;
+      background: var(--button-hover);
     }
 
     @keyframes fadeIn {
@@ -101,13 +193,21 @@
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
-
 </head>
 
-<body>
+<body class="dark">
+
+<!-- 🐝 Abeja gigante -->
+<div class="bee-bg" ondblclick="toggleBeeMode()">🐝</div>
+
+<!-- 🔊 Sonido de la abeja -->
+<audio id="buzzSound" src="https://actions.google.com/sounds/v1/animals/bee_buzz.ogg"></audio>
 
 <div class="chat-container">
-  <div class="header">ChatBot Gemini</div>
+  <div class="header">
+    BeeThink  
+    <button class="toggle-btn" onclick="toggleMode()">Light/Dark</button>
+  </div>
 
   <div class="messages" id="messages"></div>
 
@@ -118,7 +218,6 @@
 </div>
 
 <script>
-// STREAMING desde el backend Flask
 async function sendMessageToServer(prompt, onChunk) {
   const response = await fetch("http://localhost:5000/chat", {
     method: "POST",
@@ -138,7 +237,6 @@ async function sendMessageToServer(prompt, onChunk) {
   }
 }
 
-// Mostrar mensaje fijo
 function addMessage(text, type) {
   const box = document.getElementById("messages");
   const msg = document.createElement("div");
@@ -148,7 +246,6 @@ function addMessage(text, type) {
   box.scrollTop = box.scrollHeight;
 }
 
-// Crear mensaje vacío para streaming
 function addStreamingMessage() {
   const box = document.getElementById("messages");
   const msg = document.createElement("div");
@@ -159,7 +256,6 @@ function addStreamingMessage() {
   return msg;
 }
 
-// Enviar mensaje
 async function sendMessage() {
   const input = document.getElementById("userInput");
   const text = input.value.trim();
@@ -168,21 +264,50 @@ async function sendMessage() {
   addMessage(text, "user");
   input.value = "";
 
-  // Mensaje vacío del bot
   const botMsg = addStreamingMessage();
 
-  // Recibir texto en tiempo real
   await sendMessageToServer(text, (chunk) => {
     botMsg.textContent += chunk;
-
     const box = document.getElementById("messages");
     box.scrollTop = box.scrollHeight;
   });
 }
 
-// Enter para enviar
 document.getElementById("userInput").addEventListener("keydown", function(e) {
   if (e.key === "Enter") sendMessage();
+});
+
+// Cambiar entre Light y Dark Mode
+function toggleMode() {
+  document.body.classList.toggle("dark");
+  document.body.classList.remove("bee");
+}
+
+// 🐝 Activar MODO ABEJA + sonido buzz
+function toggleBeeMode() {
+  const body = document.body;
+  const buzz = document.getElementById("buzzSound");
+
+  if (body.classList.contains("bee")) {
+    body.classList.remove("bee");
+    body.classList.add("dark");
+  } else {
+    body.classList.remove("dark");
+    body.classList.add("bee");
+
+    buzz.currentTime = 0;
+    buzz.play();
+  }
+}
+
+// 🐝 Movimiento suave siguiendo el mouse
+document.addEventListener("mousemove", (e) => {
+  const bee = document.querySelector(".bee-bg");
+
+  const x = e.clientX * 0.02;
+  const y = e.clientY * 0.02;
+
+  bee.style.transform = `translate(${x}px, ${y}px)`;
 });
 </script>
 
